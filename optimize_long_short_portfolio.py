@@ -9,8 +9,6 @@ from datetime import datetime, timedelta
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-
-
 def main():
 
     # Get holdings and their direction (L/S) in a dataframe from an Excel file in the work directory and sort by Tickers
@@ -48,18 +46,15 @@ def main():
 #################################### Portfolio Optimization Functions ####################################
 
 
-# Function to calculate the portfolio volatility given the weights, returns, and number of trading days
+# Calculate the portfolio volatility given the weights, returns, and number of trading days
 def calculate_portfolio_volatility(list_weights, df_cov_matrix_scaled):
-    # Calculate the weighted covariance matrix
-    df_weighted_cov_matrix = np.dot(df_cov_matrix_scaled, list_weights)
-    # Calculate the portfolio variance
-    float_portfolio_variance = np.dot(list_weights.T, df_weighted_cov_matrix)
-    # Calculate the portfolio volatility as the square root of the variance
-    float_portfolio_volatility = np.sqrt(float_portfolio_variance)
+    df_weighted_cov_matrix = np.dot(df_cov_matrix_scaled, list_weights)     # weighted covariance matrix
+    float_portfolio_variance = np.dot(list_weights.T, df_weighted_cov_matrix)     # portfolio variance
+    float_portfolio_volatility = np.sqrt(float_portfolio_variance)     # portfolio volatility as the square root of the variance
     return float_portfolio_volatility
 
 
-# Function to initialize arrays to store the weights, returns, volatilities, and Sharpe ratios for each portfolio
+# Initialize arrays to store the weights, returns, volatilities, and Sharpe ratios for each portfolio
 def initialize_arrays(iterations, num_assets):
     list_all_weights = np.zeros((iterations, num_assets))
     list_return_array = np.zeros(iterations)
@@ -82,8 +77,11 @@ def plot_portfolio_scatter(list_volatility_array, list_return_array, list_sharpe
     logging.info(f"Scatter plot saved to - 'output/scatter_plot.png'")
 
 
-def store_optimal_portfolio_details(list_holdings, list_direction, optimal_weights, list_total_returns, optimal_portfolio_dtc, max_no_of_days_to_cover, optimal_portfolio_return, list_portfolio_sectors, list_optimal_portfolio_sector_exposures, dict_snp500_sector_exposures, max_sharpe_ratio, max_length):
-    # Create a dataframe to store the optimal portfolio details
+# Store the optimal portfolio details in a dataframe and save to an Excel file
+def store_optimal_portfolio_details(list_holdings, list_direction, optimal_weights, list_total_returns, optimal_portfolio_dtc, max_no_of_days_to_cover, optimal_portfolio_return, list_portfolio_sectors, list_optimal_portfolio_sector_exposures, dict_snp500_sector_exposures, max_sharpe_ratio):
+    
+    max_length = max(len(list_holdings), len(dict_snp500_sector_exposures))     # max length of the dataframe
+
     df_optimal_portfolio = pd.DataFrame({
         'Tickers': list_holdings + [''] * (max_length - len(list_holdings)),
         'Direction': list_direction + [''] * (max_length - len(list_direction)),
@@ -98,12 +96,12 @@ def store_optimal_portfolio_details(list_holdings, list_direction, optimal_weigh
         'Optimal Portfolio Return': [optimal_portfolio_return] + [''] * (max_length - 1)
     })
 
-    # Save the optimal portfolio details to an Excel file
     df_optimal_portfolio.to_excel(f'output/Optimal_Portfolio_Details.xlsx', sheet_name='Sheet1', index=False)
     logging.info(f"Optimal portfolio details saved to - 'output/Optimal_Portfolio_Details.xlsx'")
     return df_optimal_portfolio
 
 
+# Read the portfolio thresholds from the dictionary
 def read_portfolio_thresholds(dict_portfolio_thresholds):
     iterations = int(dict_portfolio_thresholds['portfolio_iterations'])
     log_every_n = int(dict_portfolio_thresholds['log_every_n'])
@@ -119,25 +117,23 @@ def read_portfolio_thresholds(dict_portfolio_thresholds):
     return iterations, log_every_n, weight_limit, net_weight_range, short_weight_limit, long_weight_limit, sector_exposure_threshold, start_of_period_portfolio_value, max_no_of_days_to_cover
 
 
+# Calculate the total returns for each asset
 def calculate_total_returns(df_price_history):
-    # Calculate the total returns for each asset
-    df_returns = df_price_history.pct_change()
-    df_total_returns = (1 + df_returns).prod() - 1
-    list_total_returns = df_total_returns.tolist()
+    df_returns = df_price_history.pct_change()      # calculate the daily returns
+    df_total_returns = (1 + df_returns).prod() - 1      # calculate the total returns
+    list_total_returns = df_total_returns.tolist()    # convert the total returns to a list
     return list_total_returns, df_returns
 
 
+# Calculate the covariance matrix of the returns
 def covariance_matrix(df_returns):
-    # Calculate the covariance matrix of the returns
-    df_cov_matrix = df_returns.cov()
-    # Scale the covariance matrix by the number of trading days
-    df_cov_matrix_scaled = df_cov_matrix * len(df_returns)
+    df_cov_matrix = df_returns.cov()     # covariance matrix of the returns
+    df_cov_matrix_scaled = df_cov_matrix * len(df_returns)     # Scale by the number of trading days
     return df_cov_matrix_scaled
 
 
 # Function to calculate the optimal portfolio given the price history, number of iterations, and weight limit
 def calculate_optimal_portfolio(df_price_history, df_holdings, dict_snp500_sector_exposures, dict_portfolio_thresholds):
-    
     logging.info("")
     logging.info("--------------Begin: calculate_optimal_portfolio--------------")
     logging.info("")
@@ -264,13 +260,12 @@ def calculate_optimal_portfolio(df_price_history, df_holdings, dict_snp500_secto
     optimal_portfolio_sector_exposures = list_sector_exposures[max_sharpe_ind]
     optimal_portfolio_dtc = list_days_to_cover[max_sharpe_ind]
 
-    max_length = max(len(list_holdings), len(dict_snp500_sector_exposures))
     list_portfolio_sectors = list(dict_snp500_sector_exposures.keys())
     list_optimal_portfolio_sector_exposures = [optimal_portfolio_sector_exposures.get(sector, 0) for sector in list_portfolio_sectors]
     list_direction = merged_df['Direction'].tolist()
 
     # Store optimal portfolio details in a dataframe and save to an Excel file
-    store_optimal_portfolio_details(list_holdings, list_direction, optimal_weights, list_total_returns, optimal_portfolio_dtc, max_no_of_days_to_cover, optimal_portfolio_return, list_portfolio_sectors, list_optimal_portfolio_sector_exposures, dict_snp500_sector_exposures, max_sharpe_ratio, max_length)
+    store_optimal_portfolio_details(list_holdings, list_direction, optimal_weights, list_total_returns, optimal_portfolio_dtc, max_no_of_days_to_cover, optimal_portfolio_return, list_portfolio_sectors, list_optimal_portfolio_sector_exposures, dict_snp500_sector_exposures, max_sharpe_ratio)
 
     # Call the plot_portfolio_scatter function to plot the efficient frontier and the optimal portfolio
     plot_portfolio_scatter(list_volatility_array, list_return_array, list_sharpe_array, max_sharpe_ind)
@@ -281,7 +276,6 @@ def calculate_optimal_portfolio(df_price_history, df_holdings, dict_snp500_secto
 
 ###################################### Market Data Functions ######################################
 
-# Call get_closing_prices to get DataFrame with last one year data for entered stock list
 def get_stocks_price_history(list_tickers, days):
     """
     Retrieves the historical closing prices for a list of tickers for the specified number of days.
@@ -365,7 +359,6 @@ def get_sectors(tickers):
     return sectors
 
 
-# get sector exposures by using market cap to calculate percentage for S&P500 index using yfinance library
 def get_sector_exposures(tickers):
     """
     Retrieves the sector exposures for S&P500 tickers using the yfinance library.
