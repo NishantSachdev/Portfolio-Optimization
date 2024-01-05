@@ -11,7 +11,7 @@ The optimal portfolio details are stored in a DataFrame and saved to an Excel fi
 
 The application then plots the efficient frontier and the optimal portfolio and saves it at `output/scatter_plot.png`.
 
-The application logs the progress of the portfolio generation simulations.
+The application logs the progress of the portfolio generation simulations while execution. This helps keep track of the completion progress for when a very high number of iterations are to be generated.
 
 -------------------------------------------------------------------------
 ### Use Case
