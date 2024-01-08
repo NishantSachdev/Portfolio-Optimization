@@ -27,7 +27,7 @@ Portfolio Managers / Investors can use to assess their portfolio's performance a
 3. Instead of an impractical portfolio suggestion we try to apply real world restrictions to the portfolio like
     - Days to Cover
     - Short, Long, Net Weight limits of the portfolio
-    - Sector Exposures within a range of the the benchmark sector exposures
+    - Sector Exposures within a range of the benchmark sector exposures
 4. Uses real market data from Yahoo Finance using a python library instead of dummy prices
 
 --------------------------------------------------------------------------
